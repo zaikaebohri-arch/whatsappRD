@@ -10,30 +10,55 @@ const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
  */
 async function isSlotAvailable(startStr, endStr) {
     try {
+        if (!startStr || !endStr) {
+            console.error('[ERROR] isSlotAvailable: Missing timing arguments');
+            return false;
+        }
+
         const start = new Date(startStr);
         const end = new Date(endStr);
 
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            console.error(`[ERROR] isSlotAvailable: Invalid date strings provided. Start: ${startStr}, End: ${endStr}`);
+            return false;
+        }
+
         // 1. Check existing bookings
+        // Logic: A slot overlaps if (Existing Start < Requested End) AND (Existing End > Requested Start)
         const { data: bookings, error: bookingError } = await supabase
             .from('bookings')
             .select('*')
-            .or(`start_time.lt.${end.toISOString()},end_time.gt.${start.toISOString()}`);
+            .lt('start_time', end.toISOString())
+            .gt('end_time', start.toISOString());
 
-        if (bookingError) throw bookingError;
-        if (bookings && bookings.length > 0) return false;
+        if (bookingError) {
+            console.error('[ERROR] Supabase bookings query failed:', bookingError);
+            throw bookingError;
+        }
+        if (bookings && bookings.length > 0) {
+            console.log(`[DEBUG] Slot conflict found with ${bookings.length} existing bookings.`);
+            return false;
+        }
 
         // 2. Check blocked slots
         const { data: blocks, error: blockError } = await supabase
             .from('blocked_slots')
             .select('*')
-            .or(`start_time.lt.${end.toISOString()},end_time.gt.${start.toISOString()}`);
+            .lt('start_time', end.toISOString())
+            .gt('end_time', start.toISOString());
 
-        if (blockError) throw blockError;
-        if (blocks && blocks.length > 0) return false;
+        if (blockError) {
+            console.error('[ERROR] Supabase blocks query failed:', blockError);
+            throw blockError;
+        }
+        if (blocks && blocks.length > 0) {
+            console.log(`[DEBUG] Slot conflict found with ${blocks.length} blocked slots.`);
+            return false;
+        }
 
         return true;
     } catch (error) {
-        console.error('Error checking availability:', error);
+        console.error('[CRITICAL] Unexpected error in isSlotAvailable:', error.message || error);
         return false;
     }
 }
