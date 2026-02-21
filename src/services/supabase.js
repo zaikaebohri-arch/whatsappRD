@@ -99,6 +99,12 @@ async function getSlotsInWindow(startWindow, endWindow) {
  */
 async function createBooking(phone, summary, description, startTime, endTime) {
     try {
+        // Fail-safe: Re-check availability before booking
+        const available = await isSlotAvailable(startTime, endTime);
+        if (!available) {
+            throw new Error('This slot is no longer available (it may have been booked or blocked while we were chatting).');
+        }
+
         const { data, error } = await supabase
             .from('bookings')
             .insert([{
