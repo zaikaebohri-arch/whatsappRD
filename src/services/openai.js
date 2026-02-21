@@ -159,6 +159,11 @@ const TOOLS = [
             type: 'string',
             description: 'The requested date and time in ISO 8601 format (IST).',
           },
+          durationMinutes: {
+            type: 'number',
+            description: 'Duration of the appointment in minutes. Default is 30.',
+            default: 30
+          }
         },
         required: ['dateTime'],
       },
@@ -245,13 +250,18 @@ async function handleIncomingMessage(from, text) {
 
         if (functionName === 'check_availability') {
           console.log(`Calling check_availability with ${args.dateTime}`);
+          const duration = args.durationMinutes || 30;
+
           // Calculate window: 8 hours before and after
           const requestedTime = new Date(args.dateTime);
           const startWindow = new Date(requestedTime.getTime() - 8 * 60 * 60 * 1000).toISOString();
           const endWindow = new Date(requestedTime.getTime() + 8 * 60 * 60 * 1000).toISOString();
 
           const slots = await supabaseService.getSlotsInWindow(startWindow, endWindow);
-          const isRequestedAvailable = await supabaseService.isSlotAvailable(args.dateTime, new Date(new Date(args.dateTime).getTime() + 60 * 60 * 1000).toISOString());
+
+          // Use the actual duration for the availability check
+          const endTime = new Date(requestedTime.getTime() + duration * 60 * 1000).toISOString();
+          const isRequestedAvailable = await supabaseService.isSlotAvailable(args.dateTime, endTime);
 
           toolResult = JSON.stringify({
             requested_slot_available: isRequestedAvailable,

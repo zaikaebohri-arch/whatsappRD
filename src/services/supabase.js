@@ -73,14 +73,14 @@ async function getSlotsInWindow(startWindow, endWindow) {
         const { data: bookings } = await supabase
             .from('bookings')
             .select('summary, start_time, end_time')
-            .gte('start_time', startWindow)
-            .lte('end_time', endWindow);
+            .lt('start_time', endWindow)
+            .gt('end_time', startWindow);
 
         const { data: blocks } = await supabase
             .from('blocked_slots')
             .select('reason, start_time, end_time')
-            .gte('start_time', startWindow)
-            .lte('end_time', endWindow);
+            .lt('start_time', endWindow)
+            .gt('end_time', startWindow);
 
         const allSlots = [
             ...(bookings || []).map(b => ({ type: 'Booking', info: b.summary, start: b.start_time, end: b.end_time })),
