@@ -1,50 +1,49 @@
 # Deployment Guide (Render.com)
 
-To keep this running 24/7 without your laptop, deploy it to the cloud.
-We recommend **Render.com** (it has a free tier and supports Node.js excellently).
+Since your project now has two parts (the **Bot** and the **Dashboard**), you should deploy them as two separate services on Render.
 
-## Prerequisites
-1.  **Git Repository**: Code must be on GitHub/GitLab.
-2.  **Render Account**: Sign up at [render.com](https://render.com).
+---
 
-## Step 1: Push to GitHub
-1.  Create a new repository on GitHub.
-2.  Run these commands in your terminal:
-    ```bash
-    git init
-    git add .
-    git commit -m "Initial commit"
-    git branch -M main
-    git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-    git push -u origin main
-    ```
+## Part 1: Deploy the WhatsApp Bot (Backend)
 
-## Step 2: Create Web Service on Render
-1.  Go to Render Dashboard > **New +** > **Web Service**.
-2.  Connect your GitHub repository.
-3.  **Settings**:
-    - **Runtime**: Node
-    - **Build Command**: `npm install`
-    - **Start Command**: `node src/index.js`
-4.  **Environment Variables** (Crucial Step):
-    Add the following keys (copy values from your `.env` file):
-    - `OPENAI_API_KEY`: `sk-...`
-    - `WHATSAPP_ACCESS_TOKEN`: `...`
-    - `WHATSAPP_PHONE_NUMBER_ID`: `...`
+1.  **Create a New Web Service** on Render.
+2.  **Connect your GitHub Repository**.
+3.  **Root Directory**: Leave blank (this uses the root files).
+4.  **Build Command**: `npm install`
+5.  **Start Command**: `node src/index.js`
+6.  **Environment Variables**:
+    - `PORT`: `3000`
+    - `OPENAI_API_KEY`: `sk-proj-...`
+    - `WHATSAPP_ACCESS_TOKEN`: `EAAT...`
+    - `WHATSAPP_PHONE_NUMBER_ID`: `9263...`
     - `VERIFY_TOKEN`: `lovable`
-    - `GOOGLE_CALENDAR_ID`: `...`
-    - `GOOGLE_SERVICE_ACCOUNT_JSON`: **(See Below)**
+    - `SUPABASE_URL`: `https://...supabase.co`
+    - `SUPABASE_ANON_KEY`: `eyJh...`
 
-### How to set `GOOGLE_SERVICE_ACCOUNT_JSON`
-Since you cannot upload the `service-account.json` file easily, we updated the code to read the **content** from a variable.
-1.  Open your `service-account.json` file in Notepad.
-2.  Copy the **entire content** (starts with `{` and ends with `}`).
-3.  Paste it as the value for `GOOGLE_SERVICE_ACCOUNT_JSON` in Render.
+---
+
+## Part 2: Deploy the Admin Dashboard (Frontend)
+
+1.  **Create a New Web Service** on Render.
+2.  **Connect the SAME GitHub Repository**.
+3.  **Name**: Give it a different name (e.g., `whatsapp-admin`).
+4.  **Root Directory**: `admin-dashboard` (Crucial!)
+5.  **Build Command**: `npm install`
+6.  **Start Command**: `npm run build && npm start`
+7.  **Environment Variables**:
+    - `NEXT_PUBLIC_SUPABASE_URL`: `https://...supabase.co`
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: `eyJh...`
+
+---
 
 ## Step 3: Update WhatsApp Webhook
-1.  Once deployed, Render will give you a URL like `https://whatsapp-ava.onrender.com`.
-2.  Go to **Meta Developer Portal**.
-3.  Update **Callback URL** to: `https://whatsapp-ava.onrender.com/webhook/whatsapp`
-4.  Verify again.
+1.  Once the **Bot** is deployed, Render gives you a URL (e.g., `https://whatsapprd.onrender.com`).
+2.  Go to the **Meta Developer Portal**.
+3.  Add `/webhook/whatsapp` to that URL.
+4.  **Callback URL**: `https://whatsapprd.onrender.com/webhook/whatsapp`
 
-**Done! Your bot is now in the cloud.**
+---
+
+## How to Access
+- **The Bot**: Runs silently in the background at your Render URL.
+- **The Dashboard**: Visit the URL given to the `admin-dashboard` service (e.g., `https://whatsapp-admin.onrender.com`).
