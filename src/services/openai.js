@@ -249,39 +249,45 @@ async function handleIncomingMessage(from, text) {
         const args = JSON.parse(toolCall.function.arguments);
         let toolResult = '';
 
-        if (functionName === 'check_availability') {
-          console.log(`Calling check_availability with ${args.dateTime}`);
-          const duration = args.durationMinutes || 30;
+        try {
+          if (functionName === 'check_availability') {
+            console.log(`Calling check_availability with ${args.dateTime}`);
+            const duration = args.durationMinutes || 30;
 
-          // Calculate window: 8 hours before and after
-          const requestedTime = new Date(args.dateTime);
-          const startWindow = new Date(requestedTime.getTime() - 8 * 60 * 60 * 1000).toISOString();
-          const endWindow = new Date(requestedTime.getTime() + 8 * 60 * 60 * 1000).toISOString();
+            // Calculate window: 8 hours before and after
+            const requestedTime = new Date(args.dateTime);
+            const startWindow = new Date(requestedTime.getTime() - 8 * 60 * 60 * 1000).toISOString();
+            const endWindow = new Date(requestedTime.getTime() + 8 * 60 * 60 * 1000).toISOString();
 
-          const slots = await supabaseService.getSlotsInWindow(startWindow, endWindow);
+            const slots = await supabaseService.getSlotsInWindow(startWindow, endWindow);
 
-          // Use the actual duration for the availability check
-          const endTime = new Date(requestedTime.getTime() + duration * 60 * 1000).toISOString();
-          const isRequestedAvailable = await supabaseService.isSlotAvailable(args.dateTime, endTime);
+            // Use the actual duration for the availability check
+            const endTime = new Date(requestedTime.getTime() + duration * 60 * 1000).toISOString();
+            const isRequestedAvailable = await supabaseService.isSlotAvailable(args.dateTime, endTime);
 
-          toolResult = JSON.stringify({
-            requested_slot_available: isRequestedAvailable,
-            existing_slots_in_window: slots
-          });
-        } else if (functionName === 'book_appointment') {
-          console.log(`Calling book_appointment`, args);
-          const booking = await supabaseService.createBooking(
-            from, // Use phone number as identifier
-            args.summary,
-            args.description,
-            args.startTime,
-            args.endTime
-          );
-          toolResult = `Booking successful! ID: ${booking.id}`;
-        } else if (functionName === 'create_ticket') {
-          console.log(`Calling create_ticket`, args);
-          // Mock implementation
-          toolResult = 'Ticket created successfully. ID: TICKET-1234';
+            toolResult = JSON.stringify({
+              requested_slot_available: isRequestedAvailable,
+              existing_slots_in_window: slots
+            });
+          } else if (functionName === 'book_appointment') {
+            console.log(`Calling book_appointment`, args);
+            const booking = await supabaseService.createBooking(
+              from, // Use phone number as identifier
+              args.summary,
+              args.description,
+              args.startTime,
+              args.endTime
+            );
+            toolResult = `Booking successful! ID: ${booking.id}`;
+          } else if (functionName === 'create_ticket') {
+            console.log(`Calling create_ticket`, args);
+            // Mock implementation
+            toolResult = 'Ticket created successfully. ID: TICKET-1234';
+          }
+        } catch (error) {
+          console.error(`[ERROR] Tool ${functionName} failed:`, error.message);
+          // Return the error message to the AI so it can explain it to the user
+          toolResult = `Error: ${error.message}`;
         }
 
         history.push({
