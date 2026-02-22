@@ -20,7 +20,7 @@ export default function RootLayout({
                 <div className="min-h-screen bg-slate-50">
                     <nav className="bg-white border-b border-slate-200 px-4 py-3">
                         <div className="max-w-6xl mx-auto flex justify-between items-center">
-                            <h1 className="text-xl font-bold text-slate-900">BrightSmile Admin</h1>
+                            <h1 className="text-xl font-bold text-slate-900">Dubai Smile Admin</h1>
                             <div className="flex gap-4">
                                 <a href="/" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Bookings</a>
                                 <a href="/blocked" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Blocked Slots</a>

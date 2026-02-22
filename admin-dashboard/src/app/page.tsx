@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function BookingsPage() {
     const [bookings, setBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         async function fetchBookings() {
+            setLoading(true);
             const { data, error } = await supabase
                 .from("bookings")
                 .select("*")
@@ -22,6 +26,17 @@ export default function BookingsPage() {
         fetchBookings();
     }, []);
 
+    const filteredBookings = useMemo(() => {
+        return bookings.filter(booking => {
+            const bookingDate = new Date(booking.start_time).toISOString().split('T')[0];
+            const matchesDate = (!startDate || bookingDate >= startDate) && (!endDate || bookingDate <= endDate);
+            const matchesSearch = !searchQuery ||
+                booking.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                booking.summary.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesDate && matchesSearch;
+        });
+    }, [bookings, startDate, endDate, searchQuery]);
+
     if (loading) return <div className="text-center py-10 text-slate-500">Loading bookings...</div>;
 
     return (
@@ -29,17 +44,49 @@ export default function BookingsPage() {
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-800">Client Bookings</h2>
                 <div className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium">
-                    {bookings.length} Total
+                    {filteredBookings.length} Showed
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">Search</label>
+                    <input
+                        type="text"
+                        placeholder="Phone or Summary..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">From Date</label>
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={e => setStartDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">To Date</label>
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={e => setEndDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
                 </div>
             </div>
 
             <div className="grid gap-4">
-                {bookings.length === 0 ? (
+                {filteredBookings.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300 text-slate-500">
-                        No bookings found.
+                        No bookings match your filters.
                     </div>
                 ) : (
-                    bookings.map((booking) => (
+                    filteredBookings.map((booking) => (
                         <div key={booking.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start">
                                 <div>
@@ -59,6 +106,7 @@ export default function BookingsPage() {
                                 </div>
                                 <button
                                     onClick={async () => {
+                                        if (!confirm("Are you sure you want to cancel this booking?")) return;
                                         const { error } = await supabase.from('bookings').delete().eq('id', booking.id);
                                         if (!error) setBookings(prev => prev.filter(b => b.id !== booking.id));
                                     }}

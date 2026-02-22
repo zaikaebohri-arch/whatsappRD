@@ -1,7 +1,7 @@
 {
     "name": "whatsapp-ai-agent",
     "version": "1.0.0",
-    "description": "WhatsApp AI Agent (Ava) for BrightSmile Dental Clinic",
+    "description": "WhatsApp AI Agent (Ava) for DubaiSmile Dental Clinic",
     "main": "src/index.js",
     "scripts": {
         "start": "node src/index.js",

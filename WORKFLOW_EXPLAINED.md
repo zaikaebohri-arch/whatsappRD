@@ -7,7 +7,7 @@ You are absolutely correct. Here is the step-by-step journey of a single message
 - **System**: Meta (WhatsApp Cloud) receives this message.
 
 ### 2. Meta Calls Webhook (The Trigger) ⚡
-- **Action**: Meta sends an HTTP POST request to your `Callback URL` (your ngrok address).
+- **Action**: Meta sends an HTTP POST request to your `Callback URL` (your Render/ngrok address).
 - **Code**: `src/routes/webhook.js` receives this data.
 - **Log**: You will see `[Webhook] Received message from...` in your terminal.
 
@@ -16,18 +16,18 @@ You are absolutely correct. Here is the step-by-step journey of a single message
 - **Code**: `src/services/openai.js`.
 - **Logic**:
     1.  Adds the user's message to conversation history.
-    2.  Sends the history to **OpenAI GPT-4**.
-    3.  GPT-4 decides what to do (Answer directly OR Call a Tool).
+    2.  Sends the history to **OpenAI GPT-4o**.
+    3.  GPT-4o decides what to do (Answer directly OR Call a Tool).
 
 ### 4. Tool Execution (Optional) 🛠️
 - **Scenario**: If the user asked "Book an appointment for tomorrow at 10am".
-- **Action**: GPT-4 tells the code to run `book_appointment`.
-- **Code**: `src/services/google.js`.
-- **Logic**: The code uses your `service-account.json` to create an event in your Google Calendar.
-- **Result**: "Appointment booked successfully." returns to GPT-4.
+- **Action**: GPT-4o tells the code to run `book_appointment`.
+- **Code**: `src/services/supabase.js`.
+- **Logic**: The code checks the **Supabase** database for conflicts and saves the booking.
+- **Result**: "Booking successful!" returns to GPT-4o.
 
 ### 5. AI Response Generation 📝
-- **Action**: GPT-4 takes the tool result and generates a friendly confirmation message: "Using your dental clinic persona".
+- **Action**: GPT-4o takes the tool result and generates a friendly confirmation message using the **Dubai Smile Dental Clinic** persona.
 - **Example**: "Great! I've booked your appointment for tomorrow at 10 AM."
 
 ### 6. Sending Reply (The Output) 📤
@@ -37,4 +37,4 @@ You are absolutely correct. Here is the step-by-step journey of a single message
 - **System**: Meta receives this request and pushes the notification to the user's phone.
 
 ### Summary
-User ➡️ Meta ➡️ Webhook ➡️ OpenAI 🔄 (Tools) ➡️ WhatsApp API ➡️ User
+User ➡️ Meta ➡️ Webhook ➡️ OpenAI 🔄 (Supabase) ➡️ WhatsApp API ➡️ User
